@@ -436,4 +436,13 @@ resource "aws_instance" "jenkins-server" {
 #   }
 # }
 
-# database 02
+# database subnet group
+resource "aws_db_subnet_group" "db-subnet" {
+  name       = "${local.name}-db-subnet-group"
+  subnet_ids = [aws_subnet.private_subnet1.id, aws_subnet.private_subnet2.id]
+
+  tags = {
+    Name = "${local.name}-db-subnet-group"
+    }
+}
+
