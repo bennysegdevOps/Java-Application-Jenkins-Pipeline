@@ -235,72 +235,72 @@ resource "aws_security_group" "Jenkins_SG" {
 }
 
 # Security Group for Sonarqube Server
-# resource "aws_security_group" "Sonarqube_SG" {
-#   name        = "${local.name}-Sonarqube"
-#   description = "Allow inbound traffic"
-#   vpc_id      = aws_vpc.main.id
+resource "aws_security_group" "Sonarqube_SG" {
+  name        = "${local.name}-Sonarqube"
+  description = "Allow inbound traffic"
+  vpc_id      = aws_vpc.main.id
 
-#   ingress {
-#     description      = "Allow ssh access"
-#     from_port        = var.port_ssh
-#     to_port          = var.port_ssh
-#     protocol         = "tcp"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  ingress {
+    description      = "Allow ssh access"
+    from_port        = var.port_ssh
+    to_port          = var.port_ssh
+    protocol         = "tcp"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   ingress {
-#     description      = "Allow sonarqube access"
-#     from_port        = var.port_sonar
-#     to_port          = var.port_sonar
-#     protocol         = "tcp"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  ingress {
+    description      = "Allow sonarqube access"
+    from_port        = var.port_sonar
+    to_port          = var.port_sonar
+    protocol         = "tcp"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   egress {
-#     from_port        = 0
-#     to_port          = 0
-#     protocol         = "-1"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   tags = {
-#     Name = "${local.name}-Sonarqube-SG"
-#   }
-# }
+  tags = {
+    Name = "${local.name}-Sonarqube-SG"
+  }
+}
 
-# # Security Group for Nexus Server
-# resource "aws_security_group" "Nexus_SG" {
-#   name        = "${local.name}-Nexus"
-#   description = "Allow inbound traffic"
-#   vpc_id      = aws_vpc.main.id
+# Security Group for Nexus Server
+resource "aws_security_group" "Nexus_SG" {
+  name        = "${local.name}-Nexus"
+  description = "Allow inbound traffic"
+  vpc_id      = aws_vpc.main.id
 
-#   ingress {
-#     description      = "Allow ssh access"
-#     from_port        = var.port_ssh
-#     to_port          = var.port_ssh
-#     protocol         = "tcp"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  ingress {
+    description      = "Allow ssh access"
+    from_port        = var.port_ssh
+    to_port          = var.port_ssh
+    protocol         = "tcp"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   ingress {
-#     description      = "Allow nexus access"
-#     from_port        = var.port_proxy_nex
-#     to_port          = var.port_proxy_nex
-#     protocol         = "tcp"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  ingress {
+    description      = "Allow nexus access"
+    from_port        = var.port_proxy_nex
+    to_port          = var.port_proxy_nex
+    protocol         = "tcp"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   egress {
-#     from_port        = 0
-#     to_port          = 0
-#     protocol         = "-1"
-#     cidr_blocks      = [var.RT_cidr]
-#   }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = [var.RT_cidr]
+  }
 
-#   tags = {
-#     Name = "${local.name}-Nexus-SG"
-#   }
-# }
+  tags = {
+    Name = "${local.name}-Nexus-SG"
+  }
+}
 
 # # Security Group for MySQL RDS Database
 # resource "aws_security_group" "MySQL_RDS_SG" {
@@ -334,26 +334,6 @@ resource "aws_key_pair" "benny_keypair" {
   public_key = file(var.keypair_path)
 }
 
-# ansible ubuntu instance 
-resource "aws_instance" "ansible-server" {
-  ami                                 = var.ami # ubuntu # eu-west-1
-  instance_type                       = var.instance_type
-  key_name                            = aws_key_pair.benny_keypair.key_name
-  vpc_security_group_ids              = [aws_security_group.Bastion-Ansible_SG.id]
-  associate_public_ip_address         = true
-  subnet_id                           = aws_subnet.public_subnet1.id
-  user_data                           = <<-EOF
-  #!/bin/bash
-  echo "${file(var.private_keypair_path)}" >> /home/ubuntu/.ssh/benny
-  sudo chmod 400 benny
-  sudo hostname ansible-server
-  EOF
-
-  tags = {
-    Name = "${local.name}-ansible-server"
-  }
-}
-
 # bastion host ubuntu instance 
 resource "aws_instance" "bastion-host" {
   ami                             = var.ami # ubuntu # eu-west-1
@@ -361,10 +341,10 @@ resource "aws_instance" "bastion-host" {
   key_name                        = aws_key_pair.benny_keypair.key_name
   vpc_security_group_ids          = [aws_security_group.Bastion-Ansible_SG.id]
   associate_public_ip_address     = true
-  subnet_id                       = aws_subnet.public_subnet1.id
+  subnet_id                       = aws_subnet.public_subnet2.id
   user_data                       = <<-EOF
   #!/bin/bash
-  echo "${file(var.private_keypair_path)}" >> /home/ubuntu/.ssh/benny
+  echo "${var.private_keypair_path}" >> /home/ubuntu/benny
   sudo chmod 400 benny
   sudo hostname bastion-host
   EOF
@@ -374,21 +354,31 @@ resource "aws_instance" "bastion-host" {
   }
 }
 
+# ansible ubuntu instance 
+resource "aws_instance" "ansible-server" {
+  ami                                 = var.ami2 # red hat # eu-west-1
+  instance_type                       = var.instance_type
+  key_name                            = aws_key_pair.benny_keypair.key_name
+  vpc_security_group_ids              = [aws_security_group.Bastion-Ansible_SG.id]
+  associate_public_ip_address         = true
+  subnet_id                           = aws_subnet.public_subnet2.id
+  user_data                           = local.ansible_user_data
+  
+  tags = {
+    Name = "${local.name}-ansible-server"
+  }
+}
+
 # docker ubuntu instance 
 resource "aws_instance" "docker-server" {
-  ami                           = var.ami # ubuntu # eu-west-1
+  ami                           = var.ami2 # red hat # eu-west-1
   instance_type                 = var.instance_type
   key_name                      = aws_key_pair.benny_keypair.key_name
   vpc_security_group_ids        = [aws_security_group.Docker_SG.id]
   associate_public_ip_address   = true
   subnet_id                     = aws_subnet.public_subnet1.id
-  user_data                     = <<-EOF
-  #!/bin/bash
-  echo "${file(var.private_keypair_path)}" >> /home/ubuntu/.ssh/benny
-  sudo chmod 400 benny
-  sudo hostname docker-server
-  EOF
-
+  user_data                     = local.docker_user_data
+ 
   tags = {
     Name = "${local.name}-docker-server"
   }
@@ -396,53 +386,56 @@ resource "aws_instance" "docker-server" {
 
 # jenkins ubuntu instance 
 resource "aws_instance" "jenkins-server" {
-  ami           = var.ami # ubuntu # eu-west-1
-  instance_type = var.instance_type
-  key_name = aws_key_pair.benny_keypair.key_name
-  vpc_security_group_ids = [aws_security_group.Jenkins_SG.id]
+  ami                         = var.ami2 # red hat # eu-west-1
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.benny_keypair.key_name
+  vpc_security_group_ids      = [aws_security_group.Jenkins_SG.id]
   associate_public_ip_address = true
-  subnet_id = aws_subnet.public_subnet1.id
+  subnet_id                   = aws_subnet.public_subnet1.id
+  user_data                   = local.jenkins_user_data
 
   tags = {
     Name = "${local.name}-jenkins-server"
   }
 }
 
-# # sonarqube ubuntu instance 
-# resource "aws_instance" "sonarqube-server" {
-#   ami           = var.ami # ubuntu # eu-west-1
-#   instance_type = var.instance_type
-#   key_name = aws_key_pair.benny_keypair.id
-#   vpc_security_group_ids = [aws_security_group.Sonarqube_SG.id]
-#   associate_public_ip_address = true
-#   subnet_id = aws_subnet.public_subnet1.id
-
-#   tags = {
-#     Name = "${local.name}-sonarqube-server"
-#   }
-# }
-
-# # nexus ubuntu instance 
-# resource "aws_instance" "nexus-server" {
-#   ami           = var.ami # ubuntu # eu-west-1
-#   instance_type = var.instance_type
-#   key_name = aws_key_pair.benny_keypair.id
-#   vpc_security_group_ids = [aws_security_group.Nexus_SG.id]
-#   associate_public_ip_address = true
-#   subnet_id = aws_subnet.public_subnet1.id
-
-#   tags = {
-#     Name = "${local.name}-nexus-server"
-#   }
-# }
-
-# database subnet group
-resource "aws_db_subnet_group" "db-subnet" {
-  name       = "${local.name}-db-subnet-group"
-  subnet_ids = [aws_subnet.private_subnet1.id, aws_subnet.private_subnet2.id]
+# sonarqube ubuntu instance 
+resource "aws_instance" "sonarqube-server" {
+  ami                         = var.ami # ubuntu # eu-west-1
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.benny_keypair.id
+  vpc_security_group_ids      = [aws_security_group.Sonarqube_SG.id]
+  associate_public_ip_address = true
+  subnet_id                   = aws_subnet.public_subnet1.id
+  user_data                   = local.sonarqube_user_data
 
   tags = {
-    Name = "${local.name}-db-subnet-group"
-    }
+    Name = "${local.name}-sonarqube-server"
+  }
 }
+
+# nexus ubuntu instance 
+resource "aws_instance" "nexus-server" {
+  ami                         = var.ami2 # red hat # eu-west-1
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.benny_keypair.id
+  vpc_security_group_ids      = [aws_security_group.Nexus_SG.id]
+  associate_public_ip_address = true
+  subnet_id                   = aws_subnet.public_subnet2.id
+  user_data                   = local.nexus_user_data 
+
+  tags = {
+    Name = "${local.name}-nexus-server"
+  }
+}
+
+# # database subnet group
+# resource "aws_db_subnet_group" "db-subnet" {
+#   name       = "${local.name}-db-subnet-group"
+#   subnet_ids = [aws_subnet.private_subnet1.id, aws_subnet.private_subnet2.id]
+
+#   tags = {
+#     Name = "${local.name}-db-subnet-group"
+#     }
+# }
 

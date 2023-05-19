@@ -78,9 +78,14 @@ variable "port_mysql" {
   default = "3306"
 }
 
-# ami
+# ubuntu ami
 variable "ami" {
   default = "ami-00aa9d3df94c6c354"
+}
+
+# red hat ami
+variable "ami2" {
+  default = "ami-0b04ce5d876a9ba29"
 }
 
 # instance type
@@ -93,7 +98,7 @@ variable "key_name" {
   default = "benny-keypair"
 }
 
-# keypair path
+# public keypair path
 variable "keypair_path" {
   default = "~/Desktop/keypair/benny.pub"
 }
